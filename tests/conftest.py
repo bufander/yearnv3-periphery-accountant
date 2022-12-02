@@ -39,8 +39,12 @@ def asset(create_token):
 
 @pytest.fixture
 def create_simple_accountant(project, fee_manager):
-    def create_simple_accountant(max_management_fee: int = 500, max_performance_fee: int = 500):
-        return fee_manager.deploy(project.SimpleAccountant, max_management_fee, max_performance_fee)
+    def create_simple_accountant(
+        max_management_fee: int = 500, max_performance_fee: int = 500
+    ):
+        return fee_manager.deploy(
+            project.SimpleAccountant, max_management_fee, max_performance_fee
+        )
 
     yield create_simple_accountant
 
@@ -67,7 +71,7 @@ def create_vault(project, gov):
             "VaultV3_Mock",
             "VV3_Mock",
             gov,
-            WEEK
+            WEEK,
         )
         vault.set_role(
             gov.address,
