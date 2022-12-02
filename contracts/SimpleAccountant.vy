@@ -38,8 +38,10 @@ struct Fee:
 
 # CONSTANTS #
 MAX_BPS: constant(uint256) = 10_000
-MAX_MF: constant(uint256) = 500  # 5%
-MAX_PF: constant(uint256) = 500  # 5%
+
+MAX_MF: immutable(uint256)
+MAX_PF: immutable(uint256)
+
 # NOTE: A four-century period will be missing 3 of its 100 Julian leap years, leaving 97.
 #       So the average year has 365 + 97/400 = 365.2425 days
 #       ERROR(Julian): -0.0078
@@ -56,8 +58,10 @@ fees: public(HashMap[address, Fee])
 
 
 @external
-def __init__():
+def __init__(max_management_fee: uint256, max_performance_fee: uint256):
     self.fee_manager = msg.sender
+    MAX_MF = max_management_fee
+    MAX_PF = max_performance_fee
 
 @external
 def distribute(vault: address):
