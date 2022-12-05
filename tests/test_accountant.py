@@ -413,7 +413,4 @@ def test_report__gains_cap_to_75_percent_gain(
         strategy.address, gain, 0, sender=vault
     )
 
-    assert (
-        pytest.approx(total_fees, REL_ERROR)
-        == 7_500 * gain / MAX_BPS
-    )
+    assert pytest.approx(total_fees, REL_ERROR) == 7_500 * gain / MAX_BPS
