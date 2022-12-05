@@ -173,7 +173,7 @@ def test_report__no_fees(
     assert total_refunds == 0
 
 
-@pytest.mark.parametrize("gain", [10**6, 10**18, 10**21])
+@pytest.mark.parametrize("gain", [10**23, 10**27, 10**30])
 @pytest.mark.parametrize("management_fee", [100, 500])
 def test_report__gains_management_fee(
     gain,
@@ -209,7 +209,7 @@ def test_report__gains_management_fee(
     assert total_refunds == 0
 
 
-@pytest.mark.parametrize("gain", [10**6, 10**18, 10**21])
+@pytest.mark.parametrize("gain", [10**23, 10**27, 10**30])
 @pytest.mark.parametrize("performance_fee", [100, 500])
 def test_report__gains_performance_fee(
     gain,
@@ -240,7 +240,7 @@ def test_report__gains_performance_fee(
     assert pytest.approx(total_fees, REL_ERROR) == gain * performance_fee / MAX_BPS
 
 
-@pytest.mark.parametrize("gain", [10**6, 10**18, 10**21])
+@pytest.mark.parametrize("gain", [10**23, 10**27, 10**30])
 @pytest.mark.parametrize("performance_fee", [100, 500])
 @pytest.mark.parametrize("management_fee", [100, 500])
 def test_report__gains_all_fees(
@@ -281,7 +281,7 @@ def test_report__gains_all_fees(
     )
 
 
-@pytest.mark.parametrize("loss", [10**6, 10**18, 10**21])
+@pytest.mark.parametrize("loss", [10**23, 10**27, 10**30])
 @pytest.mark.parametrize("performance_fee", [100, 500])
 def test_report__loss_performance_fee(
     loss,
@@ -313,7 +313,7 @@ def test_report__loss_performance_fee(
     assert total_refunds == 0
 
 
-@pytest.mark.parametrize("loss", [10**6, 10**18, 10**21])
+@pytest.mark.parametrize("loss", [10**23, 10**27, 10**30])
 @pytest.mark.parametrize("management_fee", [100, 500])
 def test_report__loss_management_fee(
     loss,
@@ -345,7 +345,7 @@ def test_report__loss_management_fee(
         strategy.address, 0, loss, sender=vault
     )
 
-    assert pytest.approx(total_fees, REL_ERROR) == amount * management_fee / MAX_BPS
+    assert pytest.approx(total_fees, REL_ERROR) == 0
     assert total_refunds == 0
 
 
@@ -376,3 +376,44 @@ def test_distribute(
 
     assert vault.balanceOf(simple_accountant) == 0
     assert vault.balanceOf(fee_manager) == 100
+
+
+@pytest.mark.parametrize("gain", [10**15, 10**18, 10**22])
+@pytest.mark.parametrize("performance_fee", [100, 500])
+@pytest.mark.parametrize("management_fee", [100, 500])
+def test_report__gains_cap_to_75_percent_gain(
+    gain,
+    performance_fee,
+    management_fee,
+    chain,
+    amount,
+    asset,
+    fee_manager,
+    simple_accountant,
+    create_vault,
+    create_strategy,
+    add_debt_to_strategy,
+    user_deposit,
+    gov,
+):
+    vault = create_vault(simple_accountant, asset)
+    strategy = create_strategy(vault)
+    vault.add_strategy(strategy.address, sender=gov)
+
+    user_deposit(gov, vault, amount)
+    add_debt_to_strategy(strategy, vault, amount)
+
+    chain.pending_timestamp = chain.pending_timestamp + YEAR
+    chain.mine(timestamp=chain.pending_timestamp)
+
+    simple_accountant.set_performance_fee(strategy, performance_fee, sender=fee_manager)
+    simple_accountant.set_management_fee(strategy, management_fee, sender=fee_manager)
+
+    total_fees, total_refunds = simple_accountant.report(
+        strategy.address, gain, 0, sender=vault
+    )
+
+    assert (
+        pytest.approx(total_fees, REL_ERROR)
+        == 7_500 * gain / MAX_BPS
+    )

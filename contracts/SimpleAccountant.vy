@@ -38,6 +38,7 @@ struct Fee:
 
 # CONSTANTS #
 MAX_BPS: constant(uint256) = 10_000
+MAX_SHARE: constant(uint256) = 7_500  # 75%
 
 MAX_MF: immutable(uint256)
 MAX_PF: immutable(uint256)
@@ -107,6 +108,10 @@ def accept_fee_manager():
 @external
 def report(strategy: address, gain: uint256, loss: uint256) -> (uint256, uint256):
     """ """
+    if gain == 0:
+        # NOTE: The fees are not charged if there hasn't been any gains reported
+        return (0,0)
+
     strategy_params: StrategyParams = IVault(msg.sender).strategies(strategy)
     fee: Fee = self.fees[strategy]
     duration: uint256 = block.timestamp - strategy_params.last_report
@@ -121,11 +126,12 @@ def report(strategy: address, gain: uint256, loss: uint256) -> (uint256, uint256
     )
 
     # Add performance fees on top of management fees if gains
-    if gain > 0:
-        total_fees += (gain * fee.performance_fee) / MAX_BPS
+    total_fees += (gain * fee.performance_fee) / MAX_BPS
 
+    # Cap fee
+    maximum_fee: uint256 = (gain * MAX_SHARE) / MAX_BPS
 
-    return (total_fees, 0)
+    return (min(total_fees, maximum_fee), 0)
 
 
 @view
