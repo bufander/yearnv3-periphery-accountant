@@ -1,0 +1,24 @@
+name: yearnv3-periphery-simple-accountant
+
+plugins:
+  - name: vyper
+  - name: solidity
+  - name: hardhat
+
+dependencies:
+  - name: yearn-vaults
+    github: jmonteer/yearn-vaults-v3
+    branch: master
+  - name: openzeppelin
+    github: OpenZeppelin/openzeppelin-contracts
+    version: 4.7.3
+
+solidity:
+  import_remapping:
+    - "@openzeppelin/contracts=openzeppelin/v4.7.3"
+
+default_ecosystem: ethereum
+
+ethereum:
+  local:
+    default_provider: hardhat

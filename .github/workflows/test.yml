@@ -1,0 +1,37 @@
+name: tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14.x'
+
+      - uses: ApeWorX/github-action@v1
+        with:
+          python-version: '3.9'
+          ape-version-pin: '==0.5.2'
+
+#      - name: Install Vyper
+#        run: pip install git+https://github.com/vyperlang/vyper@v0.3.7
+
+      - name: Compile contracts
+        run: ape compile --force --size
+
+      - name: Install hardhat
+        run: npm install hardhat
+
+      - name: Run tests
+        run: ape test -s
+        timeout-minutes: 15
+
